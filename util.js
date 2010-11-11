@@ -125,7 +125,7 @@ _.extend(Hash.prototype, {
       return;
     }
 
-    for (i=slot.length-2;i>=0;i--) {
+    for (i=slot.length-2;i>=0;i-=2) {
       if (this.equals(slot[i], k)) {
         slot[i+1] = v;
         return;
