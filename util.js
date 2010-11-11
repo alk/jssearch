@@ -208,6 +208,19 @@ _.groupBy = function (elements, keyF) {
   return groups;
 }
 
+// NOTE: copied from scjs. Not used.
+//
+// tests if arrays a and b are isomorphic with respect to
+// predicate. hash functions are used to optimize matching. More
+// specifically:
+//
+// ∀x,y predicate(x,y) -> (hashFA(x) == hashFB(y))
+// which, obviously, implies:
+// ∀x,y (hashFA(x) != hashFB(y)) -> !predicate(x,y)
+//
+// I.e. matching elements must have same hash
+// values. aOrderingGoodnessF is a function which value is used to
+// order matching search
 _.genericFindMatching = function (a, b, hashFA, hashFB, predicate, aOrderingGoodnessF) {
   var size = a.length;
   if (size != b.length)
