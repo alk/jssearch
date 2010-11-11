@@ -62,11 +62,8 @@ Oracle.State = function (oracle, v, body) {
   try {
     oracle.current = this;
     body(v);
-    if (this.visited === undefined) {
-      debugger
-      body(v);
+    if (this.visited === undefined)
       BUG();
-    }
   } finally {
     oracle.current = null;
   }
@@ -85,6 +82,8 @@ Oracle.prototype = {
     var ostate = this.mustCurrentState();
 
     var oracle = this;
+    if (ostate.hasOwnProperty('childsMkIter'))
+      BUG();
     ostate.childsMkIter = function (over) {
       var i = 0;
       return function () {
@@ -107,16 +106,22 @@ Oracle.prototype = {
   },
   visit: function (state) {
     var ostate = this.mustCurrentState();
+    if (ostate.visited)
+      BUG();
     ostate.visited = state;
   },
   goal: function (state) {
     var ostate = this.mustCurrentState();
+    if (ostate.visited && ostate.visited !== state)
+      BUG();
     ostate.visited = state;
     ostate.isGoal = true;
   },
   fail: function () {
-    this.mustCurrentState().visited = this.failedState;
-    return this.pick([], null);
+    var ostate = this.mustCurrentState();
+    if (ostate.visited)
+      BUG();
+    ostate.visited = this.failedState;
   }
 };
 

@@ -164,16 +164,16 @@ BasicTest.prototype.testNineGraphDFSOracle = function () {
       var hole = state[9];
       var x = hole % 3;
       var y = (hole / 3) >> 0;
-      return oracle.pick(["left", "right", "up", "down"], function (v) {
+      return oracle.pick(["right", "left", "up", "down"], function (v) {
         switch (v) {
-        case "right":
-          if (x == 2)
-            return oracle.fail();
-          return walk(swapPositions(state, hole, hole+1));
         case "left":
           if (x == 0)
             return oracle.fail();
           return walk(swapPositions(state, hole, hole-1));
+        case "right":
+          if (x == 2)
+            return oracle.fail();
+          return walk(swapPositions(state, hole, hole+1));
         case "up":
           if (y == 0)
             return oracle.fail();
@@ -213,6 +213,10 @@ BasicTest.prototype.testNineGraphDFSOracle = function () {
   graphProblem.visitState = function (state) {
     visitedCounter++;
     return true;
+  }
+
+  graphProblem.goalBackwardPathCB = function (state) {
+    console.log("intermediate state: ", state);
   }
 
   var rv = GraphSearch.iteratedDeepeningDFS(graphProblem, undefined, 24);
