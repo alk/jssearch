@@ -1,0 +1,14 @@
+This is some problem solving JS code I've started writing some time
+ago. Some very basic things work (DFS and BFS). But initial plan was
+to reach more advanced algorithms. And in fact looking at code I've
+started doing Alpha* search.
+
+Some day I'll hopefully complete this code. And because the code looks
+OK and I have nothing to hide I decided to publish it early. It may be
+of use for somebody or it may inspire more experimentation.
+
+Credit for (implicitly) encouraging me to publish this goes to Mihai
+Bazon. Particularly, his blog post about amb() operator implementation
+in JS. (http://mihai.bazon.net/blog/amb-in-javascript)
+
+Code is licensed under either GPLv2+ or MIT.
