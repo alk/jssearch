@@ -4,7 +4,7 @@ BasicTest.prototype.testSetup = function () {
   assert(true);
 }
 
-BasicTest.NineProblem = (function () {
+BasicTest.mkNineProblem = function () {
   var initialState = [5,6,2,3,8,1,4,0,7,4];
   function goalP(state) {
     for (var i=0;i<9;i++)
@@ -55,11 +55,11 @@ BasicTest.NineProblem = (function () {
   }
   problem.swapPositions = swapPositions;
   return problem;
-})();
+}
 
 BasicTest.prototype.testSimplifiedNineTreeDFS = function () {
   var finalState = [0,1,2,3,4,5,6,7,8,8];
-  var simpleProblem = BasicTest.NineProblem.shallowCopy();
+  var simpleProblem = BasicTest.mkNineProblem();
 
   simpleProblem.initialState = simpleProblem.swapPositions(finalState, 8, 7);
   assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
@@ -81,7 +81,7 @@ BasicTest.prototype.testSimplifiedNineTreeDFS = function () {
   console.log("visitedCounter: ", visitedCounter);
 }
 
-BasicTest.NineGraphProblem = (function () {
+BasicTest.mkNineGraphProblem = function (useConstructor) {
   function hashF(state) {
     var rv = 3211;
     for (var i = 9; i >= 0; i--)
@@ -94,16 +94,21 @@ BasicTest.NineGraphProblem = (function () {
         return false;
     return true;
   }
-  var treeProblem = BasicTest.NineProblem;
-  var problem = GraphSearchProblem.fromTreeProblem(treeProblem, equal, hashF);
-  problem.swapPositions = treeProblem.swapPositions;
-  problem.goalBackwardPathCB = treeProblem.goalBackwardPathCB;
+  var treeProblem = BasicTest.mkNineProblem();
+  if (useConstructor) {
+    var problem = new GraphSearchProblem(treeProblem, {
+      stateEquality: equal,
+      stateHash: hashF
+    });
+  } else {
+    var problem = GraphSearchProblem.fromTreeProblem(treeProblem, equal, hashF);
+  }
   return problem;
-})();
+}
 
 BasicTest.prototype.testSimplifiedNineGraphDFS = function () {
   var finalState = [0,1,2,3,4,5,6,7,8,8];
-  var simpleProblem = BasicTest.NineGraphProblem.shallowCopy();
+  var simpleProblem = BasicTest.mkNineGraphProblem();
 
   simpleProblem.initialState = simpleProblem.swapPositions(finalState, 8, 7);
   assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
@@ -125,30 +130,9 @@ BasicTest.prototype.testSimplifiedNineGraphDFS = function () {
   console.log("visitedCounter: ", visitedCounter);
 }
 
-BasicTest.NineGraphProblem2 = (function () {
-  function hashF(state) {
-    var rv = 3211;
-    for (var i = 9; i >= 0; i--)
-      rv = (((rv * 7) >> 0) + state[i]) >> 0;
-    return rv;
-  }
-  function equal(a, b) {
-    for (var i = 9; i >= 0; i--)
-      if (a[i] !== b[i])
-        return false;
-    return true;
-  }
-  var treeProblem = BasicTest.NineProblem;
-  var problem = new GraphSearchProblem(treeProblem, {
-    stateEquality: equal,
-    stateHash: hashF
-  });
-  return problem;
-})();
-
 BasicTest.prototype.testSimplifiedNineGraphDFSWithProblem2 = function () {
   var finalState = [0,1,2,3,4,5,6,7,8,8];
-  var simpleProblem = BasicTest.NineGraphProblem2.shallowCopy();
+  var simpleProblem = BasicTest.mkNineGraphProblem(true);
 
   simpleProblem.initialState = simpleProblem.swapPositions(finalState, 8, 7);
   assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
@@ -172,7 +156,7 @@ BasicTest.prototype.testSimplifiedNineGraphDFSWithProblem2 = function () {
 
 BasicTest.prototype.testNineGraphDFS = function () {
   var finalState = [0,1,2,3,4,5,6,7,8,8];
-  var problem = BasicTest.NineGraphProblem.shallowCopy();
+  var problem = BasicTest.mkNineGraphProblem();
 
   var visitedCounter = 0;
   problem.visitState = function (state) {
@@ -239,8 +223,9 @@ BasicTest.prototype.testNineGraphDFSOracle = function () {
 
   console.log("treeProblem: ", treeProblem);
 
-  var stateEquality = BasicTest.NineGraphProblem.stateEquality;
-  var stateHash = BasicTest.NineGraphProblem.stateHash;
+  var nineGraphProblem = BasicTest.mkNineGraphProblem();
+  var stateEquality = nineGraphProblem.stateEquality;
+  var stateHash = nineGraphProblem.stateHash;
 
   function thisEqual(a, b) {
     if (!a.visited)
