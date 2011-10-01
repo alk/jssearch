@@ -257,3 +257,88 @@ BasicTest.prototype.testNineGraphDFSOracle = function () {
 
   console.log("visitedCounter: ", visitedCounter);
 }
+
+BasicTest.prototype.testSimpleNineGraphBFS = function () {
+  var finalState = [0,1,2,3,4,5,6,7,8,8];
+  var problem = BasicTest.mkNineGraphProblem();
+
+  problem.initialState = problem.swapPositions(finalState, 8, 7);
+  assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
+  assertEquals([0,1,2,3,4,5,6,8,7,7], problem.initialState);
+
+  problem.initialState = problem.swapPositions(problem.initialState, 7, 4);
+  assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
+  assertEquals([0,1,2,3,8,5,6,4,7,4], problem.initialState);
+
+
+  var visitedCounter = 0;
+  problem.visitState = function (state) {
+    console.log("visiting: ", state);
+    visitedCounter++;
+    if (visitedCounter >= 1000)
+      throw new Error();
+    return true;
+  }
+
+  var result = GraphSearch.bfs(problem);
+  assertEquals(finalState, result);
+
+  console.log("visitedCounter: ", visitedCounter);
+}
+
+BasicTest.prototype.testNineGraphBFS = function () {
+  var finalState = [0,1,2,3,4,5,6,7,8,8];
+  var problem = BasicTest.mkNineGraphProblem();
+
+  var visitedCounter = 0;
+  problem.visitState = function (state) {
+    visitedCounter++;
+    return true;
+  }
+
+  var result = GraphSearch.bfs(problem);
+  assertEquals(finalState, result);
+
+  console.log("visitedCounter: ", visitedCounter);
+}
+
+BasicTest.prototype.testNineGraphAStarTrivial = function () {
+  var finalState = [0,1,2,3,4,5,6,7,8,8];
+  var problem = BasicTest.mkNineGraphProblem();
+  problem.badness = function (state) {return 0;}
+
+  var visitedCounter = 0;
+  problem.visitState = function (state) {
+    visitedCounter++;
+    return true;
+  }
+
+  var result = GraphSearch.astar(problem);
+  assertEquals(finalState, result);
+
+  console.log("visitedCounter: ", visitedCounter);
+}
+
+BasicTest.prototype.testNineGraphAStarSimple = function () {
+  var finalState = [0,1,2,3,4,5,6,7,8,8];
+  var problem = BasicTest.mkNineGraphProblem();
+  problem.badness = function (state) {
+    var c = 0;
+    for (var i = 0; i < 9; i++) {
+      if (state[i] != i)
+        c++;
+    }
+    return c;
+  }
+
+  var visitedCounter = 0;
+  problem.visitState = function (state) {
+    visitedCounter++;
+    return true;
+  }
+
+  var result = GraphSearch.astar(problem);
+  assertEquals(finalState, result);
+
+  console.log("visitedCounter: ", visitedCounter);
+}

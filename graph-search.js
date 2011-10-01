@@ -212,6 +212,48 @@ GraphSearch.iteratedDeepeningDFS = function (problem, failure, depthLimit, seenH
   return TreeSearch.iteratedDeepeningDFS(treeProblem, failure, depthLimit);
 }
 
+GraphSearch.astar = function (problem, failure, seenHash, pending) {
+  seenHash = seenHash || new Hash(problem.stateHash, problem.stateEquality);
+
+  var goalP = problem.goalP;
+
+  pending = pending || (function (badness) {
+    if (typeof(badness) !== 'function')
+      throw new Error("badness needs to be a function");
+    return new BinaryHeap(function (a,b) {
+      return badness(a) < badness(b);
+    });
+  })(problem.badness);
+
+  seenHash.put(problem.initialState, true);
+  pending.add(problem.initialState);
+
+  if (!problem.visitState(problem.initialState))
+    return failure;
+
+  if (goalP(problem.initialState))
+    return problem.initialState;
+
+  while (!pending.isEmpty()) {
+    var state = pending.popLeast();
+    var child;
+    var over = {};
+    var iter = problem.childStatesIterMaker(state, over);
+    while ((child = iter()) !== over) {
+      if (seenHash.get(child))
+        continue;
+      if (!problem.visitState(child))
+        return failure;
+      if (goalP(child))
+        return child;
+      seenHash.put(child, true);
+      pending.add(child);
+    }
+  }
+
+  return failure;
+}
+
 GraphSearch.SimpleFIFO = function () {
   this.pushes = []
   this.pops = []
@@ -237,78 +279,15 @@ GraphSearch.SimpleFIFO.prototype = {
   isEmpty: function () {
     return !this.pushes.length && !this.pops.length;
   }
-}
+};
+(function (prototype) {
+  prototype.popLeast = prototype.pop;
+  prototype.add = prototype.push;
+})(GraphSearch.SimpleFIFO.prototype);
 
 GraphSearch.bfs = function (problem, failure, seenHash) {
   var pending = new GraphSearch.SimpleFIFO();
-  var goalP = problem.goalP;
-
-  seenHash = seenHash || problem.mkStatesHash();
-
-  seenHash.put(problem.initialState, true);
-  pending.push(problem.initialState);
-
-  while (!pending.isEmpty()) {
-    var state = pending.pop();
-    var child;
-    var over = {};
-    var iter = problem.childStatesIterMaker(state, over);
-    while ((child = iter()) !== over) {
-      if (seenHash.get(child))
-        continue;
-      if (!problem.visitState(state))
-        continue;
-      if (goalP(state))
-        return state;
-      seenHash.put(state, true);
-      pending.push(state);
-    }
-  }
-
-  return failure;
-}
-
-function AStarSearchProblem(initialState, goalP, childStatesIterMaker,
-                            badness, getParentState,
-                            stateEquality, stateHash) {
-  this.initialState = initialState;
-  this.goalP = goalP;
-  this.childStatesIterMaker = childStatesIterMaker;
-  this.badness = badness;
-  this.getParentState = getParentState;
-  this.stateEquality = stateEquality;
-  this.stateHash = stateHash;
-}
-
-GraphSearch.astar = function (problem, failure, seenHash) {
-  seenHash = seenHash || new Hash(problem.stateHash, problem.stateEquality);
-
-  var badness = problem.badness;
-  var goalP = problem.goalP;
-
-  var pending = new BinaryHeap(function (a,b) {
-    return badness(a) < badness(b);
-  });
-
-  seenHash.put(problem.initialState, true);
-  pending.add(problem.initialState);
-
-  while (!pending.isEmpty()) {
-    var state = pending.popLeast();
-    var child;
-    var over = {};
-    var iter = problem.childStatesIterMaker(state, over);
-    while ((child = iter()) !== over) {
-      if (seenHash.get(child))
-        continue;
-      if (goalP(state))
-        return state;
-      seenHash.put(state, true);
-      pending.add(state);
-    }
-  }
-
-  return failure;
+  return GraphSearch.astar(problem, failure, seenHash, pending);
 }
 
 // TODO: need some helpers for #badness
