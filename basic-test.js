@@ -45,7 +45,10 @@ BasicTest.NineProblem = (function () {
 
     return mkArrayIter(childs, over);
   }
-  var problem = new SearchProblem(initialState, goalP, mkChildsIter);
+  var problem = new SearchProblem({
+    initialState: initialState,
+    goalP: goalP,
+    childStatesIterMaker: mkChildsIter});
 
   problem.goalBackwardPathCB = function (state) {
     console.log("intermediate state: ", state);
@@ -101,6 +104,51 @@ BasicTest.NineGraphProblem = (function () {
 BasicTest.prototype.testSimplifiedNineGraphDFS = function () {
   var finalState = [0,1,2,3,4,5,6,7,8,8];
   var simpleProblem = BasicTest.NineGraphProblem.shallowCopy();
+
+  simpleProblem.initialState = simpleProblem.swapPositions(finalState, 8, 7);
+  assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
+  assertEquals([0,1,2,3,4,5,6,8,7,7], simpleProblem.initialState);
+
+  simpleProblem.initialState = simpleProblem.swapPositions(simpleProblem.initialState, 7, 4);
+  assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);
+  assertEquals([0,1,2,3,8,5,6,4,7,4], simpleProblem.initialState);
+
+  var visitedCounter = 0;
+  simpleProblem.visitState = function (state) {
+    visitedCounter++;
+    return true;
+  }
+
+  var result = GraphSearch.iteratedDeepeningDFS(simpleProblem, undefined, 2);
+  assertEquals(finalState, result);
+
+  console.log("visitedCounter: ", visitedCounter);
+}
+
+BasicTest.NineGraphProblem2 = (function () {
+  function hashF(state) {
+    var rv = 3211;
+    for (var i = 9; i >= 0; i--)
+      rv = (((rv * 7) >> 0) + state[i]) >> 0;
+    return rv;
+  }
+  function equal(a, b) {
+    for (var i = 9; i >= 0; i--)
+      if (a[i] !== b[i])
+        return false;
+    return true;
+  }
+  var treeProblem = BasicTest.NineProblem;
+  var problem = new GraphSearchProblem(treeProblem, {
+    stateEquality: equal,
+    stateHash: hashF
+  });
+  return problem;
+})();
+
+BasicTest.prototype.testSimplifiedNineGraphDFSWithProblem2 = function () {
+  var finalState = [0,1,2,3,4,5,6,7,8,8];
+  var simpleProblem = BasicTest.NineGraphProblem2.shallowCopy();
 
   simpleProblem.initialState = simpleProblem.swapPositions(finalState, 8, 7);
   assertEquals([0,1,2,3,4,5,6,7,8,8], finalState);

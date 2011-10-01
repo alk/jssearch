@@ -1,9 +1,30 @@
 
-var SearchProblem = function (initialState, goalP, childStatesIterMaker) {
-  this.initialState = initialState;
-  this.goalP = goalP;
-  this.childStatesIterMaker = childStatesIterMaker;
+_.objectWithProto = function (proto) {
+  var maker = new Function();
+  maker.prototype = proto;
+  return new maker();
 }
+
+var SearchProblem = function (options, otherOptions) {
+  // NOTE: we want _all_ properties
+  for (var k in options) {
+    var v = options[k];
+    if (this[k] !== v)
+      this[k] = v;
+  }
+  if (otherOptions) {
+    for (var k in otherOptions) {
+      var v = otherOptions[k];
+      if (this[k] !== v)
+        this[k] = v;
+    }
+  }
+  if (!('initialState' in this && typeof(this.goalP) === 'function' && typeof(this.childStatesIterMaker) === 'function'))
+    throw new Error("missing required options");
+}
+SearchProblem.raw = function () {}
+SearchProblem.raw.prototype = SearchProblem.prototype;
+
 SearchProblem.prototype.visitState = function (state) {return true;}
 SearchProblem.prototype.forgetState = function (state) {}
 SearchProblem.prototype.goalBackwardPathCB = function (state) {}
@@ -126,48 +147,48 @@ Oracle.prototype = {
 };
 
 function oracleSearchProblem(body) {
+  var rv = new (SearchProblem.raw)();
+
   var oracle = new Oracle();
-  var initialState = new (oracle.stateConstructor)(oracle, oracle, body);
-  var goalP = function (ostate) {
+  rv.initialState = new (oracle.stateConstructor)(oracle, oracle, body);
+
+  rv.goalP = function (ostate) {
     return ostate.isGoal;
   }
-  var childStatesIterMaker = function (ostate, over) {
+
+  rv.childStatesIterMaker = function (ostate, over) {
     var childsMkIter = ostate.childsMkIter;
     return childsMkIter(over);
   }
-  return new SearchProblem(initialState, goalP, childStatesIterMaker);
+
+  return rv;
 }
 
-var GraphSearchProblem = function (initialState, goalP, childStatesIterMaker,
-                                   stateEquality, stateHash) {
-  SearchProblem.call(this, initialState, goalP, childStatesIterMaker);
-  this.stateEquality = stateEquality;
-  this.stateHash = stateHash;
+var GraphSearchProblem = function (options, otherOptions) {
+// initialState, goalP, childStatesIterMaker,
+//                                    stateEquality, stateHash
+  SearchProblem.call(this, options, otherOptions);
+  if (typeof(this.stateEquality) !== 'function' || typeof(this.stateHash) !== 'function')
+    throw new Error("missing required options");
 }
 GraphSearchProblem.fromTreeProblem = function (treeProblem, stateEquality, stateHash) {
-  var self = new GraphSearchProblem.plainConstructor();
-  treeProblem.shallowCopy(self);
+  var self = new (GraphSearchProblem.raw)();
+  SearchProblem.call(self, treeProblem);
   self.stateEquality = stateEquality;
   self.stateHash = stateHash;
+  if (typeof(self.stateEquality) !== 'function' || typeof(self.stateHash) !== 'function')
+    throw new Error("missing required options");
   return self;
 }
 
-_.objectWithProto = function (proto) {
-  var maker = new Function();
-  maker.prototype = proto;
-  return new maker();
-}
-
 GraphSearchProblem.prototype = (function () {
-  var prototype = _.objectWithProto(SearchProblem.prototype);
+  var prototype = new (SearchProblem.raw)();
   prototype.constructor = GraphSearchProblem;
   return prototype;
 })();
-GraphSearchProblem.plainConstructor = (function () {
-  var rv = new Function();
-  rv.prototype = GraphSearchProblem.prototype;
-  return rv;
-})();
+GraphSearchProblem.raw = function () {}
+GraphSearchProblem.raw.prototype = GraphSearchProblem.prototype;
+
 GraphSearchProblem.prototype.mkStatesHash = function () {
   return new Hash(this.stateHash, this.stateEquality);
 }
@@ -293,6 +314,3 @@ GraphSearch.astar = function (problem, failure, seenHash) {
 // TODO: need some helpers for #badness
 
 // TODO: need some helpers to handle 'nesting' state for #badness helper and oracleSearchProblem
-
-// TODO: need better framework for problem classes inheritance OR get
-// rid of inheritance and supply extras via options
